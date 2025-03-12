@@ -2,8 +2,12 @@ import re
 
 # Especificação dos tokens para um subconjunto de C
 token_specification = [
-    ('COMMENT',       r'//.*'),  # Captura comentários de linha
+    ('ML_COMMENT',    r'/\*[\s\S]*?\*/'),  # Comentário de várias linhas
+    ('COMMENT',       r'//.*'),            # Comentário de linha
     ('KEY_INCLUDE',   r'\#include'),
+    ('AUTO',          r'\bauto\b'),        # Palavra reservada auto
+    ('CONST',         r'\bconst\b'),       # Palavra reservada const
+    ('SIGNED',        r'\bsigned\b'),      # Palavra reservada signed
     ('LT',            r'<'),
     ('GT',            r'>'),
     ('INT',           r'\bint\b'),
@@ -20,23 +24,25 @@ token_specification = [
     ('IF',            r'\bif\b'),
     ('ELSE',          r'\belse\b'),
     ('SWITCH',        r'\bswitch\b'),
-    ('ELSE_IF',       r'\belse\s+if\b'),  # else if
+    ('ELSE_IF',       r'\belse\s+if\b'),
     ('HEADER',        r'[a-zA-Z0-9_]+\.[a-zA-Z0-9_.]*'),
-    ('TEXT',         r'"[^"]*"|\'[^\']*\''),  # Texto entre aspas duplas ou simples
+    ('TEXT',          r'"[^"]*"|\'[^\']*\''),
     ('IDENT',         r'\b[a-zA-Z_][a-zA-Z_0-9]*\b'),
     ('NUM',           r'\b\d+\b'),
+    ('LOGICAL_OR',    r'\|\|'),             # Operador lógico OU
+    ('NOT_EQUALS',    r'!='),               # Operador de desigualdade
     ('OP',            r'[\+\-\*/]'),
-    ('EQUALS',        r'='),
+    ('EQUALS',        r'='),                # Atribuição
     ('LPAREN',        r'\('),
     ('RPAREN',        r'\)'),
     ('LBRACE',        r'\{'),
     ('RBRACE',        r'\}'),
-    ('LBRACKET',      r'\['),  # [
-    ('RBRACKET',      r'\]'),  # ]
+    ('LBRACKET',      r'\['),
+    ('RBRACKET',      r'\]'),
     ('SEMICOLON',     r';'),
     ('COMMA',         r','),
-    ('COLON',         r':'),   # :
-    ('AMPERSAND',     r'&'),   # &
+    ('COLON',         r':'),
+    ('AMPERSAND',     r'&'),
     ('NEWLINE',       r'\n'),
     ('SKIP',          r'[ \t]+'),
     ('MISMATCH',      r'.')
@@ -57,15 +63,13 @@ def tokenize(code):
     pos = 0
     tokens = []
     while pos < len(code):
-        if code[pos:pos+2] == "//":  # Ignorar comentários de linha
-            while pos < len(code) and code[pos] != "\n":
-                pos += 1
         mo = get_token(code, pos)
         if not mo:
             break
         typ = mo.lastgroup
         value = mo.group(typ)
-        if typ in ('NEWLINE', 'SKIP', 'COMMENT'):
+        # Ignora espaços, quebras de linha e comentários
+        if typ in ('NEWLINE', 'SKIP', 'COMMENT', 'ML_COMMENT'):
             pass
         elif typ == 'MISMATCH':
             print(f"Erro. Token Invalido: '{value}' na posição {pos}")

@@ -1,4 +1,6 @@
-# Variável global para armazenar o arquivo de saída
+
+
+# Variável global para armazenar o arquivo de saídA
 output_file = None
 
 

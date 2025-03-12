@@ -20,13 +20,14 @@ NUMBER_COLOR = "#bd93f9"  # Roxo para números
 FUNCTION_COLOR = "#50fa7b"  # Verde para funções
 
 # Expressões regulares para identificação de tokens
+# Expressões regulares para identificação de tokens
 highlight_patterns = {
-    "keyword": (r"\b(int|float|double|char|bool|short|long|return|void|main|struct|if|else|switch)\b", "#ff79c6"),
-    # Rosa
-    "preprocessor": (r"\#include", "#ffb86c"),  # Laranja
-    "number": (r"\b\d+\b", "#bd93f9"),  # Roxo
-    "function": (r"\b[a-zA-Z_][a-zA-Z0-9_]*\s*(?=\()", "#50fa7b")  # Verde
+    "keyword": (r"\b(int|float|double|char|bool|short|long|return|void|main|struct|if|else|switch|auto|const|signed)\b", "#ff79c6"),
+    "preprocessor": (r"\#include", "#ffb86c"),
+    "number": (r"\b\d+\b", "#bd93f9"),
+    "function": (r"\b[a-zA-Z_][a-zA-Z0-9_]*\s*(?=\()", "#50fa7b")
 }
+
 
 
 def highlight_syntax(event=None):

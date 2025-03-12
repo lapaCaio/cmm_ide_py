@@ -26,7 +26,7 @@ def consume(expected_type):
 
 
 def error(message):
-    print("Erro sintático:", message)
+    print("Erro Sintático:", message)
     raise Exception(message)
 
 
