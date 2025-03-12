@@ -1,10 +1,13 @@
+# CMM_IDE.PY
 import tkinter as tk
 from tkinter import scrolledtext
 import os
 import io
 import sys
-import analisador
 import re
+
+# Importa o analisador gramatical
+from analisador_gramatica import parse
 
 # Cores do tema Dracula
 BG_COLOR = "#282a36"
@@ -14,15 +17,16 @@ TEXT_FG = "#f8f8f2"
 BUTTON_BG = "#6272a4"
 BUTTON_FG = "#f8f8f2"
 RESERVED_COLOR = "#ff79c6"  # Rosa para palavras-chave
-NUMBER_COLOR = "#bd93f9"    # Roxo para números
-FUNCTION_COLOR = "#50fa7b"   # Verde para funções
+NUMBER_COLOR = "#bd93f9"  # Roxo para números
+FUNCTION_COLOR = "#50fa7b"  # Verde para funções
 
-# Expressões regulares para identificação
+# Expressões regulares para identificação (para sintaxe simples na interface)
 tokens_regex = {
     "RESERVED": re.compile(r"\b(int|return|void|main)\b"),
     "NUMBER": re.compile(r"\b\d+\b"),
     "FUNCTION": re.compile(r"\b[a-zA-Z_][a-zA-Z_0-9]*\s*(?=\()")
 }
+
 
 def highlight_syntax(event=None):
     editor_text.tag_remove("keyword", "1.0", tk.END)
@@ -40,7 +44,7 @@ def highlight_syntax(event=None):
 
     apply_highlight(keywords, "keyword", "#ff79c6")  # Rosa
     apply_highlight(preprocessor, "preprocessor", "#ffb86c")  # Laranja
-    apply_highlight(numbers, "number", "#bd93f9")    # Roxo
+    apply_highlight(numbers, "number", "#bd93f9")  # Roxo
     apply_highlight(functions, "function", "#50fa7b")  # Verde
 
 
@@ -54,28 +58,19 @@ def apply_highlight(pattern, tag, color):
 
 
 def compilar():
+    # Salva o código digitado no editor para "main.c"
     codigo = editor_text.get("1.0", tk.END)
     with open("main.c", "w", encoding="utf-8") as f:
         f.write(codigo)
     output_text.delete("1.0", tk.END)
 
-    buffer = io.StringIO()
-    stdout_old = sys.stdout
-    sys.stdout = buffer
+    # Chama o analisador gramatical e captura erros
     try:
-        analisador.sintatico()
+        parse()  # Executa o analisador recursivo-descendente
+        output_text.insert(tk.END, "Programa compilado com sucesso.\n")
     except Exception as e:
-        print(f"Ocorreu um erro: {str(e)}")
-    finally:
-        sys.stdout = stdout_old
+        output_text.insert(tk.END, f"Erro durante a compilação: {str(e)}\n")
 
-    resultado = buffer.getvalue()
-    if os.path.exists("main.c"):
-        with open("main.c", "r", encoding="utf-8") as f:
-            resultado += "\n" + f.read()
-    else:
-        resultado += "\nArquivo 'main.c' não foi gerado."
-    output_text.insert(tk.END, resultado)
 
 # Configuração da interface
 janela = tk.Tk()
@@ -85,7 +80,8 @@ janela.configure(bg=BG_COLOR)
 label_editor = tk.Label(janela, text="Text View", bg=BG_COLOR, fg=FG_COLOR)
 label_editor.pack(padx=5, pady=5)
 
-editor_text = scrolledtext.ScrolledText(janela, width=80, height=20, bg=TEXT_BG, fg=TEXT_FG, insertbackground=FG_COLOR, undo=True)
+editor_text = scrolledtext.ScrolledText(janela, width=80, height=20, bg=TEXT_BG, fg=TEXT_FG, insertbackground=FG_COLOR,
+                                        undo=True)
 editor_text.pack(padx=5, pady=5)
 
 # Configuração das cores das tags

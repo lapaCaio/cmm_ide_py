@@ -1,3 +1,4 @@
+# semantico.py
 output_file = None
 
 def init_semantico():
@@ -14,7 +15,7 @@ def declaration_action(typ, ident, expr):
 
 def expression_action(expr):
     global output_file
-    # Gera uma expressão (por exemplo, pode ser uma atribuição ou cálculo)
+    # Gera uma expressão (por exemplo, uma atribuição ou cálculo)
     output_file.write(f"    {expr};\n")
 
 def return_action(expr):

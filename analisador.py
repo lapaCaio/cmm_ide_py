@@ -1,8 +1,9 @@
+# analisador.py
 import lexico
 import semantico
 
-tokens = []  # lista global de tokens
-current = 0  # ponteiro para o token atual
+tokens = []  # Lista global de tokens
+current = 0  # Ponteiro para o token atual
 
 def sintatico():
     with open("main.c", "r", encoding="utf-8") as f:
@@ -10,9 +11,9 @@ def sintatico():
     global tokens, current
     tokens = lexico.tokenize(code)
     current = 0
-    semantico.init_semantico()  # abre e escreve o cabeçalho no arquivo de saída
+    semantico.init_semantico()  # Abre e escreve o cabeçalho no arquivo de saída
     program()
-    semantico.end_semantico()   # finaliza o arquivo de saída
+    semantico.end_semantico()   # Finaliza o arquivo de saída
     print("Programa compilado com sucesso.")
 
 def consume(expected_type):
@@ -58,12 +59,10 @@ def stmt_list():
     if current < len(tokens) and tokens[current].type in ("INT", "RETURN", "IDENT"):
         stmt()
         stmt_list()
-    # caso contrário, produção vazia
 
 def stmt():
     # stmt -> declaration | expression_stmt | return_stmt
     if tokens[current].type == "INT":
-        # Trata declaração (exemplo: int a = 10;)
         declaration()
     elif tokens[current].type == "RETURN":
         return_stmt()
@@ -116,4 +115,5 @@ def return_stmt():
     consume("SEMICOLON")
     semantico.return_action(expr)
 
-
+if __name__ == '__main__':
+    sintatico()
