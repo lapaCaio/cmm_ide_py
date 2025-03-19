@@ -1,5 +1,5 @@
 import lexico
-import semantico
+import sintatico
 
 tokens = []  # lista global de tokens
 current = 0  # ponteiro para o token atual

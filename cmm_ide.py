@@ -1,116 +1,103 @@
-import tkinter as tk
-from tkinter import scrolledtext
-import os
-import io
-import sys
-import analisador
-import re
+import os.path
 
-# Definição das cores do tema Dracula
-BG_COLOR = "#282a36"  # Cor de fundo
-FG_COLOR = "#f8f8f2"  # Cor do texto
-TEXT_BG = "#44475a"  # Fundo do editor
-TEXT_FG = "#f8f8f2"  # Texto do editor
-BUTTON_BG = "#6272a4"  # Fundo do botão
-BUTTON_FG = "#f8f8f2"  # Texto do botão
+from customtkinter import *
+from PIL import Image
+import lexico
+from sintatico import Sintatico
 
-# Cores para realce de sintaxe
-RESERVED_COLOR = "#ff79c6"  # Rosa para palavras-chave
-NUMBER_COLOR = "#bd93f9"  # Roxo para números
-FUNCTION_COLOR = "#50fa7b"  # Verde para funções
+# Definição do esquema de cores do tema Drácula
+DARK_BG = "#282a36"
+LIGHT_BG = "#44475a"
+TEXT_COLOR = "#f8f8f2"
+ACCENT_COLOR = "#bd93f9"
 
-# Expressões regulares para identificação de tokens
-# Expressões regulares para identificação de tokens
-highlight_patterns = {
-    "keyword": (r"\b(int|float|double|char|bool|short|long|return|void|main|struct|if|else|switch|auto|const|signed)\b", "#ff79c6"),
-    "preprocessor": (r"\#include", "#ffb86c"),
-    "number": (r"\b\d+\b", "#bd93f9"),
-    "function": (r"\b[a-zA-Z_][a-zA-Z0-9_]*\s*(?=\()", "#50fa7b")
-}
+# Configuração da janela principal
+app = CTk()
+app.geometry("1200x700")
+app.resizable(False, False)  # 🔒 Impede o redimensionamento
+app.title("CMM IDE - Caio, Kaio, Gustavo, Vinicius")
+app.iconbitmap("assets\cmm_logo.ico")  # Substitua pelo caminho do seu arquivo .ico
 
+set_appearance_mode("dark")  # Mantemos no modo escuro base
 
+# Função para imprimir mensagens na telinha de log
+def log_message(texto):
+    log_textbox.configure(state="normal")  # Desbloqueia edição temporariamente
+    log_textbox.insert("end", texto + "\n")  # Adiciona a nova linha ao log
+    log_textbox.see("end")  # Rola automaticamente para a última linha
+    log_textbox.configure(state="disabled")  # Bloqueia novamente
 
-def highlight_syntax(event=None):
-    """Aplica realce de sintaxe ao código fonte."""
-    for tag in highlight_patterns:
-        editor_text.tag_remove(tag, "1.0", tk.END)
+# Função para capturar saída do terminal e exibir no log
+def click_handler():
+    code = textbox.get("0.0", "end").strip()
 
-    for tag, (pattern, color) in highlight_patterns.items():
-        apply_highlight(pattern, tag, color)
+    if not code:
+        log_message("Nenhum código para compilar.")  # Log de aviso
+        return
 
-
-def apply_highlight(pattern, tag, color):
-    """Aplica um padrão de realce ao texto no editor."""
-    editor_text.tag_configure(tag, foreground=color)
-    text_content = editor_text.get("1.0", tk.END)
-    for match in re.finditer(pattern, text_content):
-        start = f"1.0 + {match.start()} chars"
-        end = f"1.0 + {match.end()} chars"
-        editor_text.tag_add(tag, start, end)
-
-
-def compilar():
-    """Compila o código e exibe o resultado no console."""
-    codigo = editor_text.get("1.0", tk.END)
-
-    # Salva o código em um arquivo
-    with open("main.c", "w", encoding="utf-8") as f:
-        f.write(codigo)
-
-    # Limpa o console
-    output_text.delete("1.0", tk.END)
-
-    # Redireciona a saída para capturar a execução do analisador
-    buffer = io.StringIO()
-    stdout_old = sys.stdout
-    sys.stdout = buffer
+    #  print(f"Código capturado:\n{code}\n")
     try:
-        analisador.sintatico()
-    except Exception as e:
-        print(f"Ocorreu um erro: {str(e)}")
-    finally:
-        sys.stdout = stdout_old
+        tokens = lexico.tokenize(code)
+    except SyntaxError as e:
+        log_message(f"SyntaxError: {str(e)}")
 
-    # Exibe o resultado da compilação
-    resultado = buffer.getvalue()
-    if os.path.exists("main.c"):
-        with open("main.c", "r", encoding="utf-8") as f:
-            resultado += "\n" + f.read()
-    else:
-        resultado += "\nArquivo 'main.c' não foi gerado."
-    output_text.insert(tk.END, resultado)
+    parser = Sintatico(tokens, log_message)
 
+    try:
+        resultado = parser.analisar()
+        log_message(resultado)
+    except SyntaxError as e:
+        log_message(f"SyntaxError: {str(e)}")  # Exibe no log em vez do console
 
-# Configuração da interface gráfica
-janela = tk.Tk()
-janela.title("CMM IDE - Caio Lapa, Kaio Stefan, Gustavo Provete, Vinicin")
-janela.configure(bg=BG_COLOR)
+# Frame do código ocupa 60% da altura
+frame_code = CTkFrame(master=app, fg_color=DARK_BG, border_width=2)
+frame_code.pack(side="top", fill="both", expand=True)
 
-# Editor de código
-label_editor = tk.Label(janela, text="Text View", bg=BG_COLOR, fg=FG_COLOR)
-label_editor.pack(padx=5, pady=5)
+# Frame inferior que contém log e botões (40% da altura)
+frame_bottom = CTkFrame(master=app, fg_color=LIGHT_BG)
+frame_bottom.pack(side="bottom", fill="both", expand=True)
+frame_bottom.pack_propagate(False)
 
-editor_text = scrolledtext.ScrolledText(janela, width=80, height=20, bg=TEXT_BG, fg=TEXT_FG, insertbackground=FG_COLOR,
-                                        undo=True)
-editor_text.pack(padx=5, pady=5)
+# Frame do log ocupa 70% da largura inferior
+frame_log = CTkFrame(master=frame_bottom, fg_color=DARK_BG, border_width=1)
+frame_log.pack(side="left", fill="both", expand=True)
+frame_log.pack_propagate(False)
 
-# Configuração das cores das tags para realce de sintaxe
-for tag, (_, color) in highlight_patterns.items():
-    editor_text.tag_configure(tag, foreground=color)
+# Adicionando a caixa de texto do log (não editável) com fonte Fira Code
+log_textbox = CTkTextbox(master=frame_log, state="disabled", fg_color=LIGHT_BG,
+                         text_color=TEXT_COLOR, font=("Fira Code", 12))
+log_textbox.pack(fill="both", expand=True, padx=10, pady=10)
 
-# Adiciona o evento de realce ao digitar
-editor_text.bind("<KeyRelease>", highlight_syntax)
+# Frame do botão ocupa 30% da largura inferior
+frame_btn = CTkFrame(master=frame_bottom, fg_color=DARK_BG, border_width=1)
+frame_btn.pack(side="right", fill="both")
+frame_btn.pack_propagate(False)
 
-# Botão de compilação
-botao_compilar = tk.Button(janela, text="Compilar", command=compilar, bg=BUTTON_BG, fg=BUTTON_FG)
-botao_compilar.pack(padx=5, pady=10)
+# Criando dois subframes dentro de frame_btn
+frame_btn_top = CTkFrame(master=frame_btn, fg_color=DARK_BG)
+frame_btn_top.pack(side="top", fill="both", expand=True)
 
-# Área de saída do console
-label_saida = tk.Label(janela, text="Console", bg=BG_COLOR, fg=FG_COLOR)
-label_saida.pack(padx=5, pady=5)
+frame_btn_bottom = CTkFrame(master=frame_btn, fg_color=DARK_BG)
+frame_btn_bottom.pack(side="bottom", fill="both", expand=True)
 
-output_text = scrolledtext.ScrolledText(janela, width=80, height=20, bg=TEXT_BG, fg=TEXT_FG, insertbackground=FG_COLOR)
-output_text.pack(padx=5, pady=5)
+# Aumentando o tamanho do ícone
+img = CTkImage(dark_image=Image.open("assets/run_code_icon.png"), size=(32, 32))  # Ícone maior
 
-# Inicia a aplicação
-janela.mainloop()
+# Adicionando o botão de compilar (centralizado verticalmente) com fonte Fira Code
+btn = CTkButton(master=frame_btn_top, text="Compilar", corner_radius=6, height=50,
+                fg_color=ACCENT_COLOR, text_color=TEXT_COLOR,
+                font=("Fira Code", 14, "bold"),
+                image=img, command=click_handler)
+btn.place(relx=0.5, rely=0.5, anchor="center")  # Centralizado verticalmente
+
+# Adicionando uma imagem no frame inferior
+img_display = CTkImage(dark_image=Image.open("assets/cmm_logo.png"), size=(64, 64))
+img_label = CTkLabel(master=frame_btn_bottom, image=img_display, text="")
+img_label.place(relx=0.5, rely=0.5, anchor="center")  # Centralizado
+
+# Campo de texto com fonte Fira Code
+textbox = CTkTextbox(master=frame_code, fg_color=LIGHT_BG, text_color=TEXT_COLOR,
+                     font=("Fira Code", 14))
+textbox.pack(fill="both", expand=True, pady=10, padx=10)
+
+# app.mainloop()

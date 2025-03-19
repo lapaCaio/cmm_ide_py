@@ -1,8 +1,9 @@
-import analisador
 import cmm_ide
 
+
 def main():
-    analisador.sintatico()
+    cmm_ide.app.mainloop()
+
 
 if __name__ == '__main__':
     main()
