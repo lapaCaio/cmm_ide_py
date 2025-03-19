@@ -29,25 +29,29 @@ def log_message(texto):
 
 # Função para capturar saída do terminal e exibir no log
 def click_handler():
-    code = textbox.get("0.0", "end").strip()
+    # Limpa o log antes de processar o novo código
+    log_textbox.configure(state="normal")
+    log_textbox.delete("1.0", "end")
+    log_textbox.configure(state="disabled")
 
+    code = textbox.get("0.0", "end").strip()
     if not code:
-        log_message("Nenhum código para compilar.")  # Log de aviso
+        log_message("Nenhum código para compilar.")
         return
 
-    #  print(f"Código capturado:\n{code}\n")
     try:
         tokens = lexico.tokenize(code)
     except SyntaxError as e:
         log_message(f"SyntaxError: {str(e)}")
+        return  # Certifique-se de retornar aqui, caso ocorra um erro
 
     parser = Sintatico(tokens, log_message)
-
     try:
         resultado = parser.analisar()
         log_message(resultado)
     except SyntaxError as e:
-        log_message(f"SyntaxError: {str(e)}")  # Exibe no log em vez do console
+        log_message(f"SyntaxError: {str(e)}")
+
 
 # Frame do código ocupa 60% da altura
 frame_code = CTkFrame(master=app, fg_color=DARK_BG, border_width=2)
